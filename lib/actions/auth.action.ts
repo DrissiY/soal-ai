@@ -8,7 +8,7 @@ const SESSION_DURATION = 60 * 60 * 24 * 7; // 1 week
 // 1. Create and set session cookie
 export async function setSessionCookie(idToken: string) {
   const { auth } = initializeFirestore();
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   const sessionCookie = await auth.createSessionCookie(idToken, {
     expiresIn: SESSION_DURATION * 1000,
