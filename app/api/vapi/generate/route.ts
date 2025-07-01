@@ -15,11 +15,11 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: Request) {
-  const { type, role, level, techstack, amount, userid } = await request.json();
+  const { type, role, level, techStack, amount, userid } = await request.json();
 
   // ✅ Log the request received
   console.log("[VAPI API HIT] Received POST with data:", {
-    type, role, level, techstack, amount, userid,
+    type, role, level, techStack, amount, userid,
   });
 
   const { db } = initializeFirestore();
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       prompt: `Prepare questions for a job interview.
         The job role is ${role}.
         The job experience level is ${level}.
-        The tech stack used in the job is: ${techstack}.
+        The tech stack used in the job is: ${techStack}.
         The focus between behavioural and technical questions should lean towards: ${type}.
         The amount of questions required is: ${amount}.
         Please return only the questions, without any additional text.
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       role,
       type,
       level,
-      techstack: (techstack || "").split(",").map((t: string) => t.trim()),
+      techstack: techStack.split(",").map((t: string) => t.trim()),
       questions: JSON.parse(questions),
       userId: userid,
       finalized: true,
