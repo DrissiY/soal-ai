@@ -1,6 +1,15 @@
 import Agent, { CallStatus } from "@/app/components/Agent"
+import { getCurrentUser } from "@/lib/actions/auth.action"
+import { redirect } from "next/navigation"
 
-const Page = () => {
+const Page = async () => {
+  const user = await getCurrentUser()
+
+  if (!user) {
+    console.warn("[Page] No user found. Redirecting to home.")
+    redirect("/") // ✅ redirect from server
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4">
       <div className="text-center space-y-2 mb-6">
@@ -12,7 +21,12 @@ const Page = () => {
         </p>
       </div>
 
-      <Agent callStatus={CallStatus.ACTIVE} />
+      <Agent
+        username={user.name}
+        userId={user.id}
+        currentUser={user}
+        type="generate"
+      />
     </div>
   )
 }

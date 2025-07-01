@@ -1,45 +1,171 @@
-import React from 'react'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { vapi } from '@/lib/vapi.sdk'
 import BubbleVisualizer from './BubbleVisualizer'
 
 export enum CallStatus {
-  INACTIVE = "INACTIVE",
-  CONNECTING = "CONNECTING",
-  ACTIVE = "ACTIVE",
-  FINISHED = "FINISHED"
+  INACTIVE = 'INACTIVE',
+  CONNECTING = 'CONNECTING',
+  ACTIVE = 'ACTIVE',
+  FINISHED = 'FINISHED',
+}
+
+interface SavedMessage {
+  role: 'user' | 'assistant' | 'system'
+  content: string
 }
 
 type AgentProps = {
-  callStatus: CallStatus
-  onEndCall?: () => void
-  messages?: string[] // list of messages, AI or user
+  userName: string
+  userId: string
+  currentUser?: any
+  questions?: string[]
 }
 
-const Agent = ({ callStatus, onEndCall, messages }: AgentProps) => {
-  const isSpeaking = true
+const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE)
+  const [messages, setMessages] = useState<SavedMessage[]>([])
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const lastMessage =
-    messages && messages.length > 0
-      ? messages[messages.length - 1]
-      : 'Waiting for a response...'
+  const lastMessage = messages[messages.length - 1]
+
+  useEffect(() => {
+    const onCallStart = () => {
+      setCallStatus(CallStatus.ACTIVE)
+      setErrorMessage(null)
+    }
+
+    const onCallEnd = () => {
+      setCallStatus(CallStatus.FINISHED)
+      setIsSpeaking(false)
+    }
+
+    const onMessage = (message: any) => {
+      if (message.type === 'transcript' && message.transcriptType === 'final') {
+        const newMessage: SavedMessage = {
+          role: message.role,
+          content: message.transcript || '',
+        }
+        setMessages((prev) => [...prev, newMessage])
+      }
+    }
+
+    const onSpeechStart = () => setIsSpeaking(true)
+    const onSpeechEnd = () => setIsSpeaking(false)
+
+    const onError = (error: any) => {
+      console.error('[VAPI ERROR]', error)
+      setErrorMessage(`Vapi Error: ${error.message || 'Unknown error'}`)
+      setCallStatus(CallStatus.INACTIVE)
+      setIsSpeaking(false)
+    }
+
+    vapi.on('call-start', onCallStart)
+    vapi.on('call-end', onCallEnd)
+    vapi.on('message', onMessage)
+    vapi.on('speech-start', onSpeechStart)
+    vapi.on('speech-end', onSpeechEnd)
+    vapi.on('error', onError)
+
+    return () => {
+      vapi.off('call-start', onCallStart)
+      vapi.off('call-end', onCallEnd)
+      vapi.off('message', onMessage)
+      vapi.off('speech-start', onSpeechStart)
+      vapi.off('speech-end', onSpeechEnd)
+      vapi.off('error', onError)
+    }
+  }, [])
+
+  const handleCall = async () => {
+    const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID
+
+    if (!currentUser || !assistantId) {
+      setErrorMessage('Missing user or assistant ID')
+      return
+    }
+
+    try {
+      setCallStatus(CallStatus.CONNECTING)
+      setErrorMessage(null)
+
+      await vapi.start(assistantId, {
+        variableValues: {
+          username: userName,
+          userid: userId,
+          questions: questions?.join('\n') || '',
+        },
+      })
+    } catch (err) {
+      console.error('[VAPI] Call Error:', err)
+      setErrorMessage('Error starting the call: ' + (err as Error).message)
+      setCallStatus(CallStatus.INACTIVE)
+      setIsSpeaking(false)
+    }
+  }
+
+  const handleEndCall = () => {
+    vapi.stop()
+    setCallStatus(CallStatus.FINISHED)
+    setIsSpeaking(false)
+    setMessages([])
+  }
 
   return (
-    <div className="flex flex-col items-center w-full max-w-md space-y-4">
-      {isSpeaking && (
-        <div className="w-full aspect-square overflow-hidden rounded-xl">
-          <BubbleVisualizer volume={2} />
+    <div className="flex flex-col items-center w-full max-w-md space-y-4 p-4">
+      {callStatus === CallStatus.ACTIVE && isSpeaking && (
+        <div className="w-full aspect-square overflow-hidden rounded-xl bg-gray-200 flex items-center justify-center">
+          <BubbleVisualizer volume={1.5} />
         </div>
       )}
 
-      <div className="w-full bg-gray-100 text-gray-800 text-sm rounded-lg p-4">
-        {lastMessage}
+      <div className="w-full bg-gray-100 text-gray-800 text-sm rounded-lg p-4 min-h-[100px] flex flex-col justify-end">
+        {lastMessage ? (
+          <>
+            <div className="text-xs font-semibold mb-1 text-gray-600">
+              {lastMessage.role === 'user'
+                ? 'You'
+                : lastMessage.role === 'assistant'
+                ? userName
+                : 'System'}
+            </div>
+            <div className="text-gray-800">{lastMessage.content}</div>
+          </>
+        ) : (
+          <span className="text-gray-400 text-center">
+            {callStatus === CallStatus.CONNECTING ? 'Connecting...' : 'Waiting for a response...'}
+          </span>
+        )}
       </div>
 
-      {callStatus === CallStatus.ACTIVE && (
+      {errorMessage && (
+        <div className="w-full bg-red-100 text-red-700 text-sm rounded-lg p-3 text-center">
+          {errorMessage}
+        </div>
+      )}
+
+      {callStatus === CallStatus.ACTIVE ? (
         <button
-          onClick={onEndCall}
-          className="px-6 py-3 text-md font-medium text-white bg-purple-600 hover:bg-red-600 rounded-full transition-colors duration-200"
+          onClick={handleEndCall}
+          className="px-6 py-3 text-md font-medium text-white bg-purple-600 hover:bg-red-600 rounded-full transition-colors duration-200 shadow-lg"
         >
           End the Call
+        </button>
+      ) : callStatus === CallStatus.INACTIVE ? (
+        <button
+          onClick={handleCall}
+          className="px-6 py-3 text-md font-medium text-white bg-green-600 hover:bg-green-700 rounded-full transition-colors duration-200 shadow-lg"
+        >
+          Start the Call
+        </button>
+      ) : (
+        <button
+          disabled
+          className="px-6 py-3 text-md font-medium text-white bg-gray-400 rounded-full cursor-not-allowed shadow-lg"
+        >
+          Connecting...
         </button>
       )}
     </div>
