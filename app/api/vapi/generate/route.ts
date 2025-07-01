@@ -2,6 +2,18 @@ import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { initializeFirestore } from "@/firebase/admin";
 
+// Handle CORS preflight request
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*", // Use specific domain in production
+      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
+}
+
 export async function POST(request: Request) {
   const { type, role, level, techstack, amount, userid } = await request.json();
 
@@ -10,7 +22,6 @@ export async function POST(request: Request) {
     type, role, level, techstack, amount, userid,
   });
 
-  // Initialize Firestore
   const { db } = initializeFirestore();
 
   try {
@@ -44,13 +55,31 @@ export async function POST(request: Request) {
 
     await db.collection("interviews").add(interview);
 
-    return Response.json({ success: true }, { status: 200 });
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
+    });
   } catch (error) {
     console.error("[VAPI ERROR]", error);
-    return Response.json({ success: false, error: String(error) }, { status: 500 });
+    return new Response(JSON.stringify({ success: false, error: String(error) }), {
+      status: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
+    });
   }
 }
 
 export async function GET() {
-  return Response.json({ success: true, data: "Thank you!" }, { status: 200 });
+  return new Response(JSON.stringify({ success: true, data: "Thank you!" }), {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "application/json",
+    },
+  });
 }
