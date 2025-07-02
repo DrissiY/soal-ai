@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { vapi } from '@/lib/vapi.sdk'
 import BubbleVisualizer from './BubbleVisualizer'
 import { motion, AnimatePresence } from 'framer-motion'
+import { playSound } from '@/lib/playSound'
 
 export enum CallStatus {
   INACTIVE = 'INACTIVE',
@@ -39,6 +40,7 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
     }
 
     const onCallEnd = () => {
+      playSound('/sounds/sound-end.mp3')
       setCallStatus(CallStatus.FINISHED)
       setIsSpeaking(false)
     }
@@ -81,8 +83,9 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
   }, [])
 
   const handleCall = async () => {
-    const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID
+    playSound('/sounds/sound-start.mp3')
 
+    const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID
     if (!currentUser || !assistantId) {
       setErrorMessage('Missing user or assistant ID')
       return
@@ -90,8 +93,6 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
 
     try {
       setCallStatus(CallStatus.CONNECTING)
-      setErrorMessage(null)
-
       await vapi.start(assistantId, {
         variableValues: {
           username: userName,
@@ -108,6 +109,7 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
   }
 
   const handleEndCall = () => {
+    playSound('/sounds/sounds-end.mp3')
     vapi.stop()
     setCallStatus(CallStatus.FINISHED)
     setIsSpeaking(false)

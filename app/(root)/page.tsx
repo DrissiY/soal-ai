@@ -96,11 +96,16 @@ export default function Home() {
           </p>
 
           <button
-            onClick={user ? () => router.push('/interview') : handleStartInterview}
-            className="inline-block rounded-full px-6 py-3 text-white font-semibold text-sm sm:text-base bg-gradient-to-l from-purple-600 to-slate-900 hover:brightness-110 transition"
-          >
-            {user ? '🎤 Generate Your Interview' : '🚀 Start Your Interview'}
-          </button>
+  onClick={user ? () => router.push('/interview') : handleStartInterview}
+  className="inline-block rounded-full px-6 py-3 text-white font-semibold text-sm sm:text-base
+    bg-gradient-to-r from-black via-purple-700 to-purple-500 
+    bg-[length:200%_200%] bg-[position:0%_0%]
+    hover:from-black hover:via-green-500 hover:to-green-400
+    hover:bg-[position:100%_100%]
+    transition-all duration-700 ease-in-out"
+>
+  {user ? 'Generate Interview' : '🚀 Start Interview'}
+</button>
         </div>
 
         {/* Right BubbleVisualizer with Motion */}
