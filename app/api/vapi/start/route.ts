@@ -25,7 +25,7 @@ export async function POST(req: Request) {
           workflow: process.env.VAPI_WORKFLOW_ID,
           variableValues: {
             username: userName,
-            userid: userId,
+            userId: userId,
           },
         },
       }),

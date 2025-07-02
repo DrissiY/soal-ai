@@ -96,10 +96,11 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
       await vapi.start(assistantId, {
         variableValues: {
           username: userName,
-          userid: userId,
+          userId: userId,
           questions: questions?.join('\n') || '',
         },
       })
+      
     } catch (err) {
       console.error('[VAPI] Call Error:', err)
       setErrorMessage('Error starting the call: ' + (err as Error).message)
