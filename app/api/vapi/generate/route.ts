@@ -2,34 +2,29 @@ import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { initializeFirestore } from "@/firebase/admin";
 
-// Handle CORS preflight request
+// CORS config
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*", // Allow Vapi, frontend, Postman etc.
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+// Preflight handler (for CORS)
 export async function OPTIONS() {
   return new Response(null, {
     status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
+    headers: corsHeaders,
   });
 }
 
-
 export async function POST(request: Request) {
-  const { type, role, level, techstack, amount, userid } = await request.json();
-
-  console.log("[VAPI API HIT] Received POST:", {
-    role,
-    level,
-    type,
-    techstack,
-    amount,
-    userid,
-  });
-
   const { db } = initializeFirestore();
 
   try {
+    const { type, role, level, techstack, amount, userid } = await request.json();
+
+    console.log("[VAPI API HIT]", { type, role, level, techstack, amount, userid });
+
     const { text: rawQuestions } = await generateText({
       model: google("gemini-2.0-flash-001"),
       prompt: `Prepare questions for a job interview.
@@ -42,7 +37,7 @@ export async function POST(request: Request) {
         The questions are going to be read by a voice assistant so do not use "/" or "*" or any other special characters which might break the voice assistant.
         Return the questions formatted like this:
         ["Question 1", "Question 2", "Question 3"]
-
+        
         Thank you! <3
       `,
     });
@@ -67,18 +62,30 @@ export async function POST(request: Request) {
 
     await db.collection("interviews").add(interview);
 
-    return Response.json({ success: true }, { status: 200 });
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+    });
   } catch (error) {
     console.error("[🔥 VAPI ERROR]", error);
-    return Response.json({ success: false, error: String(error) }, { status: 500 });
+    return new Response(JSON.stringify({ success: false, error: String(error) }), {
+      status: 500,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+    });
   }
 }
 
 export async function GET() {
-  return new Response(JSON.stringify({ success: true, data: "Thank you!" }), {
+  return new Response(JSON.stringify({ success: true, data: "Ping from API ✅" }), {
     status: 200,
     headers: {
-      "Access-Control-Allow-Origin": "*",
+      ...corsHeaders,
       "Content-Type": "application/json",
     },
   });
