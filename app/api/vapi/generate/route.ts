@@ -62,7 +62,7 @@ Do NOT include any extra text, explanation, markdown, or formatting.`
       role,
       type,
       level,
-      techstack: techstack.split(",").map((t: string) => t.trim()),
+      techstack: (techstack || "").split(",").map((t: string) => t.trim()),
       questions: parsedQuestions,
       userId: userid || "not found",
       finalized: true,
