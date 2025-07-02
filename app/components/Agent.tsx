@@ -37,7 +37,17 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
     const onCallStart = () => {
       setCallStatus(CallStatus.ACTIVE)
       setErrorMessage(null)
-    }
+    
+      // Inject the userId, username, and questions into memory
+      vapi.send({
+        type: 'add-message',
+        message: {
+          role: 'user',
+          content: `My ID is ${userId}, my name is ${userName}.`,
+        },
+      })
+  
+    
 
     const onCallEnd = () => {
       playSound('/sounds/sound-end.mp3')
@@ -96,9 +106,10 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
       await vapi.start(assistantId, {
         variableValues: {
           username: userName,
-          userId,
+          userId: userId,
           questions: questions?.join('\n') || '',
         },
+        
       })
       
     } catch (err) {
