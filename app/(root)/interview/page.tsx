@@ -7,7 +7,9 @@ const Page = async () => {
 
   if (!user) {
     console.warn("[Page] No user found. Redirecting to home.")
-    redirect("/") // ✅ redirect from server
+    redirect("/")
+  } else {
+    console.log(user)
   }
 
   return (
