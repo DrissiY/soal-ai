@@ -19,9 +19,9 @@ export async function POST(request: Request) {
   const { db } = initializeFirestore();
 
   try {
-    const { type, role, level, techstack, amount, userid } = await request.json();
+    const { type, role, level, techstack, amount, userId } = await request.json();
 
-    console.log("[VAPI API HIT]", { type, role, level, techstack, amount, userid });
+    console.log("[VAPI API HIT]", { type, role, level, techstack, amount, userId });
 
     const { text: rawQuestions } = await generateText({
       model: google("gemini-2.0-flash-001"),
@@ -64,7 +64,7 @@ Do NOT include any extra text, explanation, markdown, or formatting.`
       level,
       techstack: (techstack || "").split(",").map((t: string) => t.trim()),
       questions: parsedQuestions,
-      userId: userid || "not found",
+      userId: userId,
       finalized: true,
       createdAt: new Date().toISOString(),
     };
