@@ -38,16 +38,19 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
       setCallStatus(CallStatus.ACTIVE)
       setErrorMessage(null)
     
-      // Inject the userId, username, and questions into memory
-      vapi.send({
-        type: 'add-message',
-        message: {
-          role: 'user',
-          content: `My ID is ${userId}, my name is ${userName}.`,
-        },
-      })
-  
-    
+      // Send userId message once call is confirmed started
+      try {
+        vapi.send({
+          type: 'add-message',
+          message: {
+            role: 'system',
+            content: `The call has started with userId: ${userId}`,
+          },
+        })
+      } catch (e) {
+        console.error('Failed to send userId message:', e)
+      }
+    }
 
     const onCallEnd = () => {
       playSound('/sounds/sound-end.mp3')
