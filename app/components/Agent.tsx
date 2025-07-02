@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { vapi } from '@/lib/vapi.sdk'
 import BubbleVisualizer from './BubbleVisualizer'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export enum CallStatus {
   INACTIVE = 'INACTIVE',
@@ -115,30 +116,48 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
 
   return (
     <div className="flex flex-col items-center w-full max-w-md space-y-4 p-4">
-      {callStatus === CallStatus.ACTIVE && isSpeaking && (
-        <div className="w-full aspect-square overflow-hidden rounded-xl bg-gray-200 flex items-center justify-center">
-          <BubbleVisualizer volume={1.5} />
-        </div>
-      )}
-
-      <div className="w-full bg-gray-100 text-gray-800 text-sm rounded-lg p-4 min-h-[100px] flex flex-col justify-end">
-        {lastMessage ? (
-          <>
-            <div className="text-xs font-semibold mb-1 text-gray-600">
-              {lastMessage.role === 'user'
-                ? 'You'
-                : lastMessage.role === 'assistant'
-                ? userName
-                : 'System'}
-            </div>
-            <div className="text-gray-800">{lastMessage.content}</div>
-          </>
-        ) : (
-          <span className="text-gray-400 text-center">
-            {callStatus === CallStatus.CONNECTING ? 'Connecting...' : 'Waiting for a response...'}
-          </span>
+      <AnimatePresence>
+        {callStatus === CallStatus.ACTIVE && (
+          <motion.div
+            key="bubbles"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.5 }}
+            className="w-full aspect-square overflow-hidden rounded-xl flex items-center justify-center"
+          >
+            <BubbleVisualizer
+              volume={1.5}
+              speaker={lastMessage?.role === 'user' ? 'user' : 'ai'}
+            />
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {callStatus === CallStatus.ACTIVE && lastMessage && (
+          <motion.div
+            key="transcript"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.4 }}
+            className="w-full bg-gray-100 text-gray-800 text-sm rounded-lg p-4 flex flex-col space-y-2 max-h-60 overflow-y-auto"
+          >
+            <div
+              className={`text-sm px-3 py-2 rounded-md max-w-[90%] ${
+                lastMessage.role === 'user'
+                  ? 'self-end bg-green-500/80 text-white'
+                  : lastMessage.role === 'assistant'
+                  ? 'self-start bg-purple-600/80 text-white'
+                  : 'self-center text-gray-400 italic'
+              }`}
+            >
+              {lastMessage.content}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {errorMessage && (
         <div className="w-full bg-red-100 text-red-700 text-sm rounded-lg p-3 text-center">

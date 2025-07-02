@@ -1,19 +1,20 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import BubbleVisualizer from "../components/BubbleVisualizer";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "@/firebase/client";
-import { handleGoogleAuth, getCurrentUser } from "@/lib/actions/auth.action";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import BubbleVisualizer from '../components/BubbleVisualizer';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '@/firebase/client';
+import { handleGoogleAuth, getCurrentUser } from '@/lib/actions/auth.action';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   const [volume, setVolume] = useState(0);
   const targetVolume = useRef(0);
   const [connecting, setConnecting] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    let rafId;
+    let rafId: number;
     const animate = () => {
       setVolume((prev) => {
         const diff = targetVolume.current - prev;
@@ -58,57 +59,69 @@ export default function Home() {
       const idToken = await result.user.getIdToken();
       const response = await handleGoogleAuth(idToken);
       if (response?.success) {
-        router.push("/interview");
+        router.push('/interview');
       } else {
-        alert("❌ Authentication failed.");
+        alert('❌ Authentication failed.');
       }
     } catch (err) {
-      console.error("Google Sign-In Error:", err);
+      console.error('Google Sign-In Error:', err);
     } finally {
       setConnecting(false);
     }
   };
 
   return (
-    <main className="relative h-dvh px-6 sm:px-10  bg-[#FFFDF4] flex flex-col justify-between overflow-hidden">
-      <BubbleVisualizer volume={volume} />
+    <main className="relative h-dvh px-6 sm:px-10 bg-[#FFFDF4] flex flex-col justify-between overflow-hidden">
+      {/* Top Content */}
+      <div className="flex flex-col md:flex-row flex-1 items-center justify-between ">
+        {/* Left Column */}
+        <div className="relative z-10 flex flex-col items-start text-left justify-center flex-1 max-w-full">
+          <div>
+            {user ? (
+              <h2 className="text-lg font-semibold text-gray-900">
+                Hey <span className="text-purple-700">{user.name}</span> 👋
+              </h2>
+            ) : (
+              <Image src="/Soal-logo.png" width={100} height={20} alt="logo" />
+            )}
+          </div>
 
-      <div className="relative z-10 flex flex-col items-start text-left justify-center flex-grow">
-      <div className="mb-6">
-  {user ? (
-    <h2 className="text-lg font-semibold text-gray-900">
-      Hey <span className="text-purple-700">{user.name}</span> 👋
-    </h2>
-  ) : (
-    <Image src="/Soal-logo.png" width={100} height={20} alt="logo" />
-  )}
-</div>
+          <h1 className="text-[40px] sm:text-[52px] md:text-[64px] font-bold leading-tight bg-gradient-to-r from-purple-700 to-green-400 bg-clip-text text-transparent font-playfair mt-2">
+            Ready for your next big opportunity?
+          </h1>
 
-        <h1 className="text-[64px] font-bold leading-tight bg-gradient-to-r from-purple-700 to-green-400 bg-clip-text text-transparent font-playfair">
-          Ready for your next big
-          <br />
-          opportunity?
-        </h1>
+          <p className="text-gray-700 max-w-md mb-6 text-base sm:text-lg mt-2">
+            Simulate real interviews. Get honest feedback. <br />
+            Walk in confident, walk out hired.
+          </p>
 
-        <p className="text-gray-700 max-w-md mb-6 text-base sm:text-lg">
-          Simulate real interviews. Get honest feedback. <br />
-          Walk in confident, walk out hired.
-        </p>
+          <button
+            onClick={user ? () => router.push('/interview') : handleStartInterview}
+            className="inline-block rounded-full px-6 py-3 text-white font-semibold text-sm sm:text-base bg-gradient-to-l from-purple-600 to-slate-900 hover:brightness-110 transition"
+          >
+            {user ? '🎤 Generate Your Interview' : '🚀 Start Your Interview'}
+          </button>
+        </div>
 
-        <button
-          onClick={user ? () => router.push("/interview") : handleStartInterview}
-          className="inline-block rounded-full px-6 py-3 text-white font-semibold text-sm sm:text-base bg-gradient-to-r from-purple-800 to-black hover:brightness-110 transition"
+        {/* Right BubbleVisualizer with Motion */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+          className="relative w-full md:w-[50%] h-[50%] "
         >
-          {user ? "🎤 Go to Interview" : "🚀 Start Your Interview"}
-        </button>
+          <BubbleVisualizer volume={volume} />
+        </motion.div>
       </div>
 
-      <div className="relative z-10 flex justify-center">
+      {/* Footer */}
+      <div className="relative z-10 flex justify-center mt-6">
         <p className="text-gray-400 text-xs sm:text-sm italic text-center">
           Crafted with AI, designed by interviewers — for serious talent like you.
         </p>
       </div>
 
+      {/* Dialog */}
       <Dialog open={connecting}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
