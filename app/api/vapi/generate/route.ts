@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { initializeFirestore } from "@/firebase/admin";
+import { getCurrentUser } from "@/lib/actions/auth.action";
 
 // Handle CORS preflight request
 export async function OPTIONS() {
@@ -17,13 +18,17 @@ export async function OPTIONS() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { type, role, level, techStack, amount, userid } = body;
+    const { type, role, level, techStack, amount } = body;
 
     console.log("[VAPI API HIT] Received POST with data:", body);
 
     const { db } = initializeFirestore();
+    const user = await getCurrentUser();
 
-    // Ask Gemini to generate interview questions
+    if (!user || !user.id) {
+      throw new Error("User not authenticated.");
+    }
+
     const { text: rawQuestions } = await generateText({
       model: google("gemini-2.0-flash-001"),
       prompt: `Prepare questions for a job interview.
@@ -39,7 +44,6 @@ export async function POST(request: Request) {
       `,
     });
 
-    // Clean potential Markdown formatting
     const cleaned = rawQuestions
       .replace(/```json/i, "")
       .replace(/```/, "")
@@ -60,7 +64,7 @@ export async function POST(request: Request) {
       level,
       techstack: (techStack || "").split(",").map((t: string) => t.trim()),
       questions: parsedQuestions,
-      userId: userid,
+      userId: user.id,
       finalized: true,
       createdAt: new Date().toISOString(),
     };
