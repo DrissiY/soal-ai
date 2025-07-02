@@ -96,7 +96,7 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
       await vapi.start(assistantId, {
         variableValues: {
           username: userName,
-          userId: userId,
+          userId,
           questions: questions?.join('\n') || '',
         },
       })
