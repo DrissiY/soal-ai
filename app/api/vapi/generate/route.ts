@@ -23,12 +23,19 @@ export async function POST(request: Request) {
     console.log("[VAPI API HIT] Received POST with data:", body);
 
     const { db } = initializeFirestore();
-    const user = await getCurrentUser();
 
-    if (!user || !user.id) {
-      throw new Error("User not authenticated.");
+    // Try to get user
+    let userId = "not found";
+    try {
+      const user = await getCurrentUser();
+      if (user?.id) {
+        userId = user.id;
+      }
+    } catch (err) {
+      console.warn("[⚠️ Auth Warning] Failed to fetch user, using 'not found'");
     }
 
+    // Generate interview questions
     const { text: rawQuestions } = await generateText({
       model: google("gemini-2.0-flash-001"),
       prompt: `Prepare questions for a job interview.
@@ -64,7 +71,7 @@ export async function POST(request: Request) {
       level,
       techstack: (techStack || "").split(",").map((t: string) => t.trim()),
       questions: parsedQuestions,
-      userId: user.id,
+      userId,
       finalized: true,
       createdAt: new Date().toISOString(),
     };
