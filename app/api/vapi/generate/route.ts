@@ -2,14 +2,12 @@ import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { initializeFirestore } from "@/firebase/admin";
 
-// CORS config
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // Allow Vapi, frontend, Postman etc.
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-// Preflight handler (for CORS)
 export async function OPTIONS() {
   return new Response(null, {
     status: 204,
@@ -28,26 +26,37 @@ export async function POST(request: Request) {
     const { text: rawQuestions } = await generateText({
       model: google("gemini-2.0-flash-001"),
       prompt: `Prepare questions for a job interview.
-        The job role is ${role}.
-        The job experience level is ${level}.
-        The tech stack used in the job is: ${techstack}.
-        The focus between behavioural and technical questions should lean towards: ${type}.
-        The amount of questions required is: ${amount}.
-        Please return only the questions, without any additional text.
-        The questions are going to be read by a voice assistant so do not use "/" or "*" or any other special characters which might break the voice assistant.
-        Return the questions formatted like this:
-        ["Question 1", "Question 2", "Question 3"]
-        
-        Thank you! <3
-      `,
+The job role is ${role}.
+The job experience level is ${level}.
+The tech stack used in the job is: ${techstack}.
+The focus between behavioural and technical questions should lean towards: ${type}.
+The amount of questions required is: ${amount}.
+
+Return ONLY a raw JSON array of questions like:
+["Question 1", "Question 2", "Question 3"]
+
+Do NOT include any extra text, explanation, markdown, or formatting.`
     });
+
+    console.log("[🧪 Gemini RAW Output]", rawQuestions);
 
     const cleaned = rawQuestions
       .replace(/```json/i, "")
       .replace(/```/, "")
       .trim();
 
-    const parsedQuestions = JSON.parse(cleaned);
+    let parsedQuestions: string[] = [];
+
+    try {
+      parsedQuestions = JSON.parse(cleaned);
+      if (!Array.isArray(parsedQuestions)) throw new Error("Not an array");
+    } catch (err) {
+      console.warn("[⚠️ Gemini returned non-JSON or invalid array]", cleaned);
+      parsedQuestions = [
+        "Could not generate valid questions.",
+        "Please try again or adjust the input.",
+      ];
+    }
 
     const interview = {
       role,
@@ -82,7 +91,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  return new Response(JSON.stringify({ success: true, data: "Ping from API ✅" }), {
+  return new Response(JSON.stringify({ success: true, data: "Ping from Vapi API" }), {
     status: 200,
     headers: {
       ...corsHeaders,
