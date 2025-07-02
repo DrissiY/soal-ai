@@ -1,7 +1,6 @@
 import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { initializeFirestore } from "@/firebase/admin";
-import { getCurrentUser } from "@/lib/actions/auth.action";
 
 // Handle CORS preflight request
 export async function OPTIONS() {
@@ -63,7 +62,6 @@ export async function POST(request: Request) {
       questions: parsedQuestions,
       userId: userid || "not found",
       finalized: true,
-      coverImage: getRandomInterviewCover?.() || null,
       createdAt: new Date().toISOString(),
     };
 
