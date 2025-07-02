@@ -18,24 +18,27 @@ export async function OPTIONS() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { type, role, level, techStack, amount } = body;
+    const { type, role, level, techStack, amount, userId: rawUserId } = body;
 
     console.log("[VAPI API HIT] Received POST with data:", body);
 
     const { db } = initializeFirestore();
 
-    // Try to get user
-    let userId = "not found";
-    try {
-      const user = await getCurrentUser();
-      if (user?.id) {
-        userId = user.id;
+    // Step 1: Determine userId (from body OR session fallback)
+    let userId = typeof rawUserId === "string" ? rawUserId : "not found";
+
+    if (userId === "not found") {
+      try {
+        const user = await getCurrentUser();
+        if (user?.id) {
+          userId = user.id;
+        }
+      } catch (err) {
+        console.warn("[⚠️ Auth Warning] No session detected, using fallback");
       }
-    } catch (err) {
-      console.warn("[⚠️ Auth Warning] Failed to fetch user, using 'not found'");
     }
 
-    // Generate interview questions
+    // Step 2: Generate interview questions
     const { text: rawQuestions } = await generateText({
       model: google("gemini-2.0-flash-001"),
       prompt: `Prepare questions for a job interview.
@@ -51,6 +54,7 @@ export async function POST(request: Request) {
       `,
     });
 
+    // Step 3: Clean and parse questions
     const cleaned = rawQuestions
       .replace(/```json/i, "")
       .replace(/```/, "")
@@ -65,6 +69,7 @@ export async function POST(request: Request) {
       throw new Error("Failed to parse questions. Response was not valid JSON.");
     }
 
+    // Step 4: Build interview object
     const interview = {
       role,
       type,
