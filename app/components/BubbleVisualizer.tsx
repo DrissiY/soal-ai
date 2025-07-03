@@ -56,19 +56,17 @@ export default function BubbleVisualizer({
       update() {
         this.x += this.vx
         this.y += this.vy
-        this.alpha -= 0.005
+        this.alpha -= 0.01
       }
 
       draw(ctx: CanvasRenderingContext2D) {
-        ctx.shadowColor = rgba(${this.color}, ${this.alpha})
-
-        if (this.alpha > 0.7) ctx.shadowBlur = 0
-        else if (this.alpha > 0.3) ctx.shadowBlur = 5
-        else ctx.shadowBlur = 10
+        ctx.shadowColor = `rgba(${this.color}, ${this.alpha})`
+        ctx.shadowBlur =
+          this.alpha > 0.7 ? 0 : this.alpha > 0.3 ? 5 : 10
 
         const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r)
-        gradient.addColorStop(0, rgba(${this.color}, ${this.alpha}))
-        gradient.addColorStop(1, rgba(255, 255, 255, 0))
+        gradient.addColorStop(0, `rgba(${this.color}, ${this.alpha})`)
+        gradient.addColorStop(1, `rgba(255, 255, 255, 0)`)
 
         ctx.beginPath()
         ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
@@ -78,7 +76,7 @@ export default function BubbleVisualizer({
     }
 
     const spawnBubbles = (vol: number = 0.5) => {
-      const v = Math.max(vol, 0.4) // 👈 never go below 0.4
+      const v = Math.max(vol, 0.4)
       const count = Math.floor(v * 10 + 3)
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * 2 * Math.PI
@@ -100,10 +98,10 @@ export default function BubbleVisualizer({
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      bubbles.forEach((b, index) => {
+      bubbles = bubbles.filter((b) => {
         b.update()
         b.draw(ctx)
-        if (b.alpha <= 0) bubbles.splice(index, 1)
+        return b.alpha > 0
       })
 
       requestAnimationFrame(animate)
