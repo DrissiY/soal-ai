@@ -18,9 +18,7 @@ export interface InterviewCardProps {
 
 const InterviewCard = ({
   interviewId,
-  userId,
   role,
-  type,
   techstack,
   createdAt,
   score,
@@ -31,17 +29,23 @@ const InterviewCard = ({
   const displayedTech = showAll ? techstack : techstack.slice(0, 3)
   const hasOverflow = techstack.length > 3
 
-  const isInProgress = !finalized
-  const cardBgClass = isInProgress ? 'bg-purple-50' : 'bg-white'
-  const redirectTo = isInProgress
+  // Background color: light purple if no score
+  const cardBgClass = !score ? 'bg-purple-50' : 'bg-white'
+
+  const redirectTo = !finalized
     ? `/interview/${interviewId}`
     : `/interview/${interviewId}/feedback`
 
+  // Button style: transparent if score, purple if not
+  const buttonClass = score
+    ? 'bg-transparent text-dark-100 border border-primary-200'
+    : 'bg-primary-200 text-dark-100 hover:bg-primary-200/80'
+
   return (
     <div
-      className={`${cardBgClass} w-full p-4 rounded-xl border border-gray-200 flex justify-between items-center`}
+      className={`${cardBgClass} w-full p-4 rounded-xl border border-gray-200 flex items-center justify-between gap-4`}
     >
-      <div>
+      <div className="flex-1 min-w-0">
         {/* Score */}
         {score && (
           <div className="flex items-center gap-1 text-xs text-yellow-600 font-medium mb-1">
@@ -51,8 +55,8 @@ const InterviewCard = ({
         )}
 
         {/* Role */}
-        <h3 className="font-bold text-base mb-1">{role}</h3>
-        <p className="text-xs text-gray-500 mb-1">{formattedDate}</p>
+        <h3 className="font-bold text-base mb-1 truncate">{role}</h3>
+        <p className="text-xs text-gray-500 mb-2">{formattedDate}</p>
 
         {/* Tech Stack */}
         <div className="flex gap-2 flex-wrap">
@@ -78,7 +82,9 @@ const InterviewCard = ({
 
       {/* Button */}
       <Link href={redirectTo}>
-        <button className="bg-primary-200 text-dark-100 rounded-full px-4 py-2 hover:bg-primary-200/80 transition">
+        <button
+          className={`flex-shrink-0 rounded-full p-2 transition ${buttonClass}`}
+        >
           <Icon icon="material-symbols:arrow-forward-rounded" width="20" />
         </button>
       </Link>
