@@ -3,7 +3,7 @@
 import React, { ReactNode, useEffect, useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import PageLoader from '../components/landingPage'
-
+import { AuthInitializer } from '@/app/components/AuthInitializer'
 
 const Rootlayout = ({ children }: { children: ReactNode }) => {
   const [showLoader, setShowLoader] = useState(true)
@@ -35,6 +35,7 @@ const Rootlayout = ({ children }: { children: ReactNode }) => {
       >
         <Sidebar />
         <div className={`flex-1 overflow-auto ${isMobile ? 'p-4 pt-2' : 'p-6'}`}>
+        <AuthInitializer />
           {children}
         </div>
       </div>

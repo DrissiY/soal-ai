@@ -1,16 +1,22 @@
-import Agent, { CallStatus } from "@/app/components/Agent"
-import { getCurrentUser } from "@/lib/actions/auth.action"
-import { redirect } from "next/navigation"
+'use client'
 
-const Page = async () => {
-  const user = await getCurrentUser()
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Agent from '@/app/components/Agent'
+import { useUserStore } from '@/store/userStore'
 
-  if (!user) {
-    console.warn("[Page] No user found. Redirecting to home.")
-    redirect("/")
-  } else {
-    console.log(user)
-  }
+const Page = () => {
+  const user = useUserStore((s) => s.user)
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!user) {
+      console.warn('[Page] No user found. Redirecting to home.')
+      router.push('/')
+    }
+  }, [user, router])
+
+  if (!user) return null // Or show loading state
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4">

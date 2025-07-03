@@ -5,6 +5,7 @@ import { vapi } from '@/lib/vapi.sdk'
 import BubbleVisualizer from './BubbleVisualizer'
 import { motion, AnimatePresence } from 'framer-motion'
 import { playSound } from '@/lib/playSound'
+import Spinner from './ui/Spinner'
 
 export enum CallStatus {
   INACTIVE = 'INACTIVE',
@@ -37,8 +38,7 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
     const onCallStart = () => {
       setCallStatus(CallStatus.ACTIVE)
       setErrorMessage(null)
-    
-      // Send userId message once call is confirmed started
+
       try {
         vapi.send({
           type: 'add-message',
@@ -54,7 +54,7 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
 
     const onCallEnd = () => {
       playSound('/sounds/sound-end.mp3')
-      setCallStatus(CallStatus.FINISHED)
+      setCallStatus(CallStatus.INACTIVE)
       setIsSpeaking(false)
     }
 
@@ -112,9 +112,7 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
           userId: userId,
           questions: questions?.join('\n') || '',
         },
-        
       })
-      
     } catch (err) {
       console.error('[VAPI] Call Error:', err)
       setErrorMessage('Error starting the call: ' + (err as Error).message)
@@ -126,13 +124,14 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
   const handleEndCall = () => {
     playSound('/sounds/sounds-end.mp3')
     vapi.stop()
-    setCallStatus(CallStatus.FINISHED)
     setIsSpeaking(false)
     setMessages([])
+    setCallStatus(CallStatus.INACTIVE)
   }
 
   return (
     <div className="flex flex-col items-center w-full max-w-md space-y-4 p-4">
+      {/* Bubble Visualizer */}
       <AnimatePresence>
         {callStatus === CallStatus.ACTIVE && (
           <motion.div
@@ -151,6 +150,7 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
         )}
       </AnimatePresence>
 
+      {/* Transcript */}
       <AnimatePresence>
         {callStatus === CallStatus.ACTIVE && lastMessage && (
           <motion.div
@@ -176,12 +176,14 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
         )}
       </AnimatePresence>
 
+      {/* Error Message */}
       {errorMessage && (
         <div className="w-full bg-red-100 text-red-700 text-sm rounded-lg p-3 text-center">
           {errorMessage}
         </div>
       )}
 
+      {/* Call Controls */}
       {callStatus === CallStatus.ACTIVE ? (
         <button
           onClick={handleEndCall}
@@ -198,10 +200,16 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
         </button>
       ) : (
         <button
-          disabled
-          className="px-6 py-3 text-md font-medium text-white bg-gray-400 rounded-full cursor-not-allowed shadow-lg"
+          onClick={handleEndCall}
+          className="group relative flex items-center gap-2 px-6 py-3 text-md font-medium text-white bg-gray-400 hover:bg-red-500 rounded-full transition-all duration-300 shadow-lg"
         >
-          Connecting...
+          <Spinner className="w-4 h-4" />
+          <span className="transition-opacity group-hover:opacity-0 duration-300">
+            Generating...
+          </span>
+          <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            Cancel
+          </span>
         </button>
       )}
     </div>

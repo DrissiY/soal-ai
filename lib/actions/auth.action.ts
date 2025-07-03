@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { initializeFirestore } from "@/firebase/admin"; // <-- your helper
+;
 
 const SESSION_DURATION = 60 * 60 * 24 * 7; // 1 week
 
@@ -92,3 +93,4 @@ export async function isAuthenticated() {
   const user = await getCurrentUser();
   return !!user;
 }
+
