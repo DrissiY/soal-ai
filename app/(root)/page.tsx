@@ -12,35 +12,10 @@ export default function Home() {
   const router = useRouter()
   const user = useUserStore((state) => state.user) // Real user from Zustand or other global store
 
-  const [volume, setVolume] = useState(0)
-  const targetVolume = useRef(0)
   const [connecting, setConnecting] = useState(false)
 
-  useEffect(() => {
-    const sequence = [20, 3.2, 4, 5.1]
-    let index = 0
-
-    const interval = setInterval(() => {
-      targetVolume.current = sequence[index]
-      index = (index + 1) % sequence.length
-    }, 80000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    let rafId: number
-    const animate = () => {
-      setVolume((prev) => {
-        const diff = targetVolume.current - prev
-        const eased = prev + diff * 0.2
-        return parseFloat(eased.toFixed(2))
-      })
-      rafId = requestAnimationFrame(animate)
-    }
-    animate()
-    return () => cancelAnimationFrame(rafId)
-  }, [])
+  
+  
 
   const handleStartInterview = async () => {
     setConnecting(true)
@@ -156,6 +131,9 @@ export default function Home() {
                   transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
                   className="absolute top-8 right-8 w-12 h-12 bg-purple-100/80 rounded-lg backdrop-blur-sm"
                 />
+                <BubbleVisualizer
+              volume={0.5}
+            />
                 <motion.div
                   animate={{ y: [0, -20, 0] }}
                   transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}

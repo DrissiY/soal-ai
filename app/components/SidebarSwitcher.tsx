@@ -42,7 +42,7 @@ const SidebarSwitcher = ({ activePanel }: SidebarSwitcherProps) => {
   }, [user?.id])
 
   return (
-    <div className="w-full md:w-[280px] h-auto md:h-full border-t md:border-t-0 md:border-r border-[#CBDECD] p-4 md:p-6 bg-transparent overflow-y-auto">
+    <div className="w-full md:w-[280px] h-auto md:h-full border-t border-b md:border-t-0 md:border-r border-[#CBDECD] p-4 md:p-6 bg-transparent overflow-y-auto">
       {activePanel === 'explore' && (
         <>
           <h2 className="text-lg font-semibold mb-4">Interviews</h2>
