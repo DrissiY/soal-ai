@@ -26,7 +26,7 @@ export default function Home() {
   }
 
   return (
-    <main className="relative h-screen overflow-hidden bg-[#FFFDF4]">
+    <main className="relative h-screen overflow-y bg-[#FFFDF4]">
       <div className="relative z-10 h-full sm:px-12 lg:px-10 flex flex-col">
         {/* Nav */}
         <nav className="flex justify-between items-center py-8">
