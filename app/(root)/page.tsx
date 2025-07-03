@@ -170,7 +170,7 @@ export default function Home() {
                 
                 {/* Main visualizer container - no border, clean */}
                 <div className="absolute inset-0 overflow-hidden rounded-3xl">
-                  <BubbleVisualizer volume={5} />
+               
                   
                   {/* Floating elements */}
                   <motion.div
