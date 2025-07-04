@@ -1,3 +1,4 @@
+// interviewStore.ts
 import { create } from 'zustand'
 
 type Interview = {
@@ -6,20 +7,25 @@ type Interview = {
   type: string
   techstack: string[]
   createdAt: string
-  score?: string
+  score?: number
   finalized: boolean
+  questions?: string[]
 }
 
-type InterviewStore = {
+interface InterviewState {
   interviews: Interview[]
+  fullInterviews: Interview[]
   loading: boolean
-  setInterviews: (data: Interview[]) => void
-  setLoading: (loading: boolean) => void
+  setInterviews: (interviews: Interview[]) => void
+  setFullInterviews: (interviews: Interview[]) => void
+  setLoading: (state: boolean) => void
 }
 
-export const useInterviewStore = create<InterviewStore>((set) => ({
+export const useInterviewStore = create<InterviewState>((set) => ({
   interviews: [],
-  loading: true,
-  setInterviews: (data) => set({ interviews: data }),
+  fullInterviews: [],
+  loading: false,
+  setInterviews: (interviews) => set({ interviews }),
+  setFullInterviews: (fullInterviews) => set({ fullInterviews }),
   setLoading: (loading) => set({ loading }),
 }))

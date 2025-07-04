@@ -13,33 +13,41 @@ interface SidebarSwitcherProps {
 
 const SidebarSwitcher = ({ activePanel }: SidebarSwitcherProps) => {
   const user = useUserStore((s) => s.user)
-  const { interviews, setInterviews, loading, setLoading } = useInterviewStore()
+const { interviews, setInterviews, setFullInterviews, loading, setLoading } = useInterviewStore()
 
   useEffect(() => {
-    async function fetch() {
-      if (!user?.id) return
-      setLoading(true)
+  async function fetch() {
+    if (!user?.id) return
+    setLoading(true)
 
-      const data = await getInterviewsByUserId(user.id)
+    const data = await getInterviewsByUserId(user.id)
 
-      if (data) {
-        const processed = data.map((i: any) => ({
-          id: i.id,
-          role: i.role,
-          type: i.type,
-          techstack: i.techstack,
-          createdAt: new Date(i.createdAt).toLocaleDateString(),
-          score: i.score,
-          finalized: i.finalized,
-        }))
-        setInterviews(processed)
-      }
+    if (data) {
+      // ✅ Store the full version (with questions) in Zustand
+      setFullInterviews(data)
 
-      setLoading(false)
+      // ✅ Prepare light version for sidebar UI
+      const processed = data.map((i: any) => ({
+        id: i.id,
+        role: i.role,
+        type: i.type,
+        techstack: i.techstack,
+        createdAt: new Date(i.createdAt).toLocaleDateString(),
+        score: i.score,
+        finalized: i.finalized,
+          questions: i.questions,
+      }))
+
+      const unique = Array.from(new Map(processed.map(i => [i.id, i])).values())
+
+      setInterviews(unique)
     }
 
-    fetch()
-  }, [user?.id])
+    setLoading(false)
+  }
+
+  fetch()
+}, [user?.id])
 
   return (
     <div className="w-full md:w-[280px] h-auto md:h-full border-t border-b md:border-t-0 md:border-r border-[#CBDECD] p-4 md:p-6 bg-transparent overflow-y-auto">

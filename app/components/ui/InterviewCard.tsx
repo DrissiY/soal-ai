@@ -34,7 +34,7 @@ const InterviewCard = ({
 
   const redirectTo = !finalized
     ? `/interview/${interviewId}`
-    : `/interview/${interviewId}/feedback`
+    : `/interview/${interviewId}`
 
   // Button style: transparent if score, purple if not
   const buttonClass = score

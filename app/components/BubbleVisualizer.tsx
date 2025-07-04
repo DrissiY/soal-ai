@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 type BubbleVisualizerProps = {
   volume: number // value between 0 and 1
   spawnFrom?: { x: number; y: number }
-  speaker?: 'ai' | 'user' // determines color
+  speaker?: 'ai' | 'user'
 }
 
 export default function BubbleVisualizer({
@@ -40,7 +40,7 @@ export default function BubbleVisualizer({
     }[] = []
 
     const getColor = () =>
-      speaker === 'user' ? '0, 200, 100' : '168, 85, 247' // green vs purple
+      speaker === 'user' ? '0, 200, 100' : '168, 85, 247'
 
     class Bubble {
       constructor(
@@ -56,13 +56,12 @@ export default function BubbleVisualizer({
       update() {
         this.x += this.vx
         this.y += this.vy
-        this.alpha -= 0.01
+        this.alpha -= 0.002 // even slower fade
       }
 
       draw(ctx: CanvasRenderingContext2D) {
         ctx.shadowColor = `rgba(${this.color}, ${this.alpha})`
-        ctx.shadowBlur =
-          this.alpha > 0.7 ? 0 : this.alpha > 0.3 ? 5 : 10
+        ctx.shadowBlur = this.alpha > 0.6 ? 0 : 10
 
         const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r)
         gradient.addColorStop(0, `rgba(${this.color}, ${this.alpha})`)
@@ -75,24 +74,24 @@ export default function BubbleVisualizer({
       }
     }
 
-    const spawnBubbles = (vol: number = 0.5) => {
-      const v = Math.max(vol, 0.4)
-      const count = Math.floor(v * 10 + 3)
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * 2 * Math.PI
-        const speed = Math.random() * 0.8 + 0.5
-        const r = Math.random() * 15 + v * 25
+    const spawnBubble = (vol: number = 0.5) => {
+      // Small chance to skip this tick
+      if (Math.random() > 0.6) return
 
-        const origin = spawnFrom || {
-          x: canvas.width / 2,
-          y: canvas.height / 1.6,
-        }
+      const v = Math.max(vol, 0.2)
+      const angle = Math.random() * 2 * Math.PI
+      const speed = Math.random() * 0.1 + 0.02
+      const r = Math.random() * 8 + v * 10
 
-        const vx = Math.cos(angle) * speed * 0.5
-        const vy = Math.sin(angle) * speed * 0.5 - 0.4
-
-        bubbles.push(new Bubble(origin.x, origin.y, r, vx, vy, 1, getColor()))
+      const origin = spawnFrom || {
+        x: canvas.width / 2,
+        y: canvas.height / 1.6,
       }
+
+      const vx = Math.cos(angle) * speed
+      const vy = Math.sin(angle) * speed - 0.05
+
+      bubbles.push(new Bubble(origin.x, origin.y, r, vx, vy, 1, getColor()))
     }
 
     const animate = () => {
@@ -110,8 +109,8 @@ export default function BubbleVisualizer({
     animate()
 
     const interval = setInterval(() => {
-      spawnBubbles(volume)
-    }, 120)
+      spawnBubble(volume)
+    }, 300) // slower interval (1 bubble per ~0.3s)
 
     return () => {
       clearInterval(interval)

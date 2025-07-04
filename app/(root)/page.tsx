@@ -1,28 +1,49 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Sparkles, Zap, Brain, ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import BubbleVisualizer from '@/app/components/BubbleVisualizer'
-import { useUserStore } from '@/store/userStore' // Replace with your actual path
+import { useUserStore } from '@/store/userStore'
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
+import { auth } from '@/firebase/client' // your firebase client config
+import { handleGoogleAuth } from '@/lib/actions/auth.action'
 
 export default function Home() {
   const router = useRouter()
-  const user = useUserStore((state) => state.user) // Real user from Zustand or other global store
-
+  const user = useUserStore((s) => s.user)
+  const setUser = useUserStore((s) => s.setUser)
   const [connecting, setConnecting] = useState(false)
 
-  
-  
-
   const handleStartInterview = async () => {
-    setConnecting(true)
-    setTimeout(() => {
-      setConnecting(false)
+    if (user) {
       router.push('/interview')
-    }, 2000)
+      return
+    }
+
+    try {
+      setConnecting(true)
+      const provider = new GoogleAuthProvider()
+      const result = await signInWithPopup(auth, provider)
+      const idToken = await result.user.getIdToken()
+
+      const res = await handleGoogleAuth(idToken)
+      if (res.success) {
+        // Set user in Zustand manually
+        const { displayName, email, photoURL, uid } = result.user
+        setUser({ name: displayName, email, profileURL: photoURL, id: uid })
+        router.push('/interview')
+      } else {
+        alert('Login failed')
+      }
+    } catch (err) {
+      console.error('[Google Login Error]', err)
+      alert('Something went wrong during login.')
+    } finally {
+      setConnecting(false)
+    }
   }
 
   return (
@@ -35,9 +56,7 @@ export default function Home() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             className="flex items-center space-x-2"
-          >
-            {/* Add logo or nav items if needed */}
-          </motion.div>
+          />
 
           {user && (
             <motion.div
@@ -62,10 +81,10 @@ export default function Home() {
                 transition={{ duration: 1, delay: 0.3 }}
                 className="space-y-6"
               >
-                <Image src="/Logo-soal.png" alt="logo" height={100} width={100} />
+                <Image src="/Soalai_logo.png" alt="logo" height={100} width={100} />
                 <div className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-50 border border-purple-200 rounded-full">
                   <Sparkles className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm text-purple-700 font-medium">AI-Powered Interview Prep</span>
+                  <span className="text-sm text-purple-700 font-medium">AI-Powered Interviews</span>
                 </div>
 
                 <h1 className="text-5xl lg:text-7xl font-black leading-tight">
@@ -104,7 +123,7 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.8 }}
               >
                 <button
-                  onClick={user ? () => router.push('/interview') : handleStartInterview}
+                  onClick={handleStartInterview}
                   className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-purple-600 via-violet-600 to-purple-500 rounded-full font-bold text-white text-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-green-400 via-emerald-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -116,7 +135,7 @@ export default function Home() {
               </motion.div>
             </div>
 
-            {/* Right: Visualizer Placeholder */}
+            {/* Right Visuals */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -125,20 +144,7 @@ export default function Home() {
             >
               <div className="relative w-full h-96 lg:h-[500px]">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 blur-3xl rounded-full" />
-                <div className="absolute inset-0 overflow-hidden rounded-3xl" />
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                  className="absolute top-8 right-8 w-12 h-12 bg-purple-100/80 rounded-lg backdrop-blur-sm"
-                />
-                <BubbleVisualizer
-              volume={0.5}
-            />
-                <motion.div
-                  animate={{ y: [0, -20, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute bottom-8 left-8 w-8 h-8 bg-green-100/80 rounded-full backdrop-blur-sm"
-                />
+                <BubbleVisualizer volume={10} />
               </div>
             </motion.div>
           </div>
@@ -156,7 +162,6 @@ export default function Home() {
         </motion.footer>
       </div>
 
-      {/* Loader on login */}
       {connecting && (
         <motion.div
           initial={{ opacity: 0 }}

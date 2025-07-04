@@ -6,6 +6,9 @@ import BubbleVisualizer from './BubbleVisualizer'
 import { motion, AnimatePresence } from 'framer-motion'
 import { playSound } from '@/lib/playSound'
 import Spinner from './ui/Spinner'
+import { useRouter } from 'next/navigation'
+
+
 
 export enum CallStatus {
   INACTIVE = 'INACTIVE',
@@ -23,16 +26,20 @@ type AgentProps = {
   userName: string
   userId: string
   currentUser?: any
+  type: 'interview' | 'generate'
   questions?: string[]
+    interviewId?: string
 }
 
-const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
+const Agent = ({ userName, userId, currentUser, type, questions,interviewId }: AgentProps) => {
+  const router = useRouter()
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE)
   const [messages, setMessages] = useState<SavedMessage[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const lastMessage = messages[messages.length - 1]
+  const isInterview = type === 'interview' && questions && questions.length > 0
 
   useEffect(() => {
     const onCallStart = () => {
@@ -44,19 +51,35 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
           type: 'add-message',
           message: {
             role: 'system',
-            content: `The call has started with userId: ${userId}`,
+            content: `The call has started with userId: ${userId}. Type: ${type}`,
           },
         })
+
+        if (isInterview) {
+          console.log('[Interview Questions Sent to Vapi]', questions)
+
+          vapi.send({
+            type: 'add-message',
+            message: {
+              role: 'system',
+              content: `Structured interview questions:\n${questions.join('\n')}`,
+            },
+          })
+        }
       } catch (e) {
-        console.error('Failed to send userId message:', e)
+        console.error('Failed to send metadata on call start:', e)
       }
     }
 
-    const onCallEnd = () => {
-      playSound('/sounds/sound-end.mp3')
-      setCallStatus(CallStatus.INACTIVE)
-      setIsSpeaking(false)
-    }
+  const onCallEnd = () => {
+  playSound('/sounds/sound-end.mp3')
+  setCallStatus(CallStatus.INACTIVE)
+  setIsSpeaking(false)
+
+  if (type === 'interview' && interviewId) {
+    router.push(`/interview/${interviewId}/feedback`)
+  }
+}
 
     const onMessage = (message: any) => {
       if (message.type === 'transcript' && message.transcriptType === 'final') {
@@ -93,33 +116,53 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
       vapi.off('speech-end', onSpeechEnd)
       vapi.off('error', onError)
     }
-  }, [])
+  }, [type, userId, questions])
 
   const handleCall = async () => {
-    playSound('/sounds/sound-start.mp3')
+  playSound('/sounds/sound-start.mp3')
 
-    const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID
-    if (!currentUser || !assistantId) {
-      setErrorMessage('Missing user or assistant ID')
+  // Strictly fetch based on type
+  let assistantId: string | undefined
+
+  if (type === 'interview') {
+    assistantId = process.env.NEXT_PUBLIC_INTERVIEW_ASSISTANT_ID
+    if (!assistantId) {
+      setErrorMessage('Interview assistant ID is missing in environment variables.')
       return
     }
-
-    try {
-      setCallStatus(CallStatus.CONNECTING)
-      await vapi.start(assistantId, {
-        variableValues: {
-          username: userName,
-          userId: userId,
-          questions: questions?.join('\n') || '',
-        },
-      })
-    } catch (err) {
-      console.error('[VAPI] Call Error:', err)
-      setErrorMessage('Error starting the call: ' + (err as Error).message)
-      setCallStatus(CallStatus.INACTIVE)
-      setIsSpeaking(false)
+  } else if (type === 'generate') {
+    assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID
+    if (!assistantId) {
+      setErrorMessage('Generate assistant ID is missing in environment variables.')
+      return
     }
+  } else {
+    setErrorMessage('Invalid assistant type.')
+    return
   }
+
+  if (!currentUser) {
+    setErrorMessage('User not found. Please log in again.')
+    return
+  }
+
+  try {
+    setCallStatus(CallStatus.CONNECTING)
+
+    await vapi.start(assistantId, {
+      variableValues: {
+        username: userName,
+        userId,
+        ...(type === 'interview' ? { questions: questions?.join('\n') } : {}),
+      },
+    })
+  } catch (err) {
+    console.error('[VAPI] Call Error:', err)
+    setErrorMessage('Error starting the call: ' + (err as Error).message)
+    setCallStatus(CallStatus.INACTIVE)
+    setIsSpeaking(false)
+  }
+}
 
   const handleEndCall = () => {
     playSound('/sounds/sounds-end.mp3')
@@ -140,7 +183,7 @@ const Agent = ({ userName, userId, currentUser, questions }: AgentProps) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.5 }}
-            className="w-full aspect-square overflow-hidden rounded-2xl backdrop-blur-md  flex items-center justify-center"
+            className="w-full aspect-square overflow-hidden rounded-2xl backdrop-blur-md flex items-center justify-center"
           >
             <BubbleVisualizer
               volume={1.5}

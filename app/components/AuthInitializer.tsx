@@ -1,19 +1,25 @@
 'use client'
 
 import { useEffect } from 'react'
-import { getCurrentUser } from '@/lib/actions/auth.action'
 import { useUserStore } from '@/store/userStore'
 
 export const AuthInitializer = () => {
-  const { user, setUser } = useUserStore()
+  const setUser = useUserStore((s) => s.setUser)
 
   useEffect(() => {
-    if (!user) {
-      getCurrentUser().then((u) => {
-        if (u) setUser(u)
-      })
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('/api/me') // 👈 This will call your edge API route
+        if (!res.ok) return
+        const user = await res.json()
+        setUser(user)
+      } catch (err) {
+        console.error('[AuthInit] Failed to load user', err)
+      }
     }
-  }, [user, setUser])
+
+    fetchUser()
+  }, [setUser])
 
   return null
 }
