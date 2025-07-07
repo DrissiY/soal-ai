@@ -17,7 +17,7 @@ export async function OPTIONS() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { interviewId, userId, transcript, feedbackId } = body
+    const { interviewId, userId, transcript } = body
 
     if (!interviewId || !userId || !Array.isArray(transcript)) {
       return new Response(
@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
       interviewId,
       userId,
       transcript,
-      feedbackId,
     })
 
     return new Response(JSON.stringify(result), {
