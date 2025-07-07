@@ -81,7 +81,7 @@ export default function Home() {
                 transition={{ duration: 1, delay: 0.3 }}
                 className="space-y-6"
               >
-                <Image src="/Soalai_logo.png" alt="logo" height={100} width={100} />
+                <Image src="/soalai_logo.png" alt="logo" height={100} width={100} />
                 <div className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-50 border border-purple-200 rounded-full">
                   <Sparkles className="w-4 h-4 text-purple-600" />
                   <span className="text-sm text-purple-700 font-medium">AI-Powered Interviews</span>
