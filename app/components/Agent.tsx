@@ -77,7 +77,7 @@ const Agent = ({ userName, userId, currentUser, type, questions,interviewId }: A
   setIsSpeaking(false)
 
   if (type === 'interview' && interviewId) {
-    router.push(`/interview/${interviewId}/feedback`)
+    router.push(`/feedback/${interviewId}`)
   }
 }
 
