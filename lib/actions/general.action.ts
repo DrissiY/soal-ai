@@ -12,54 +12,72 @@ export async function createFeedback(params: CreateFeedbackParams) {
   try {
     const { db } = initializeFirestore()
 
-    const formattedTranscript = transcript
-      .map(
-        (sentence: { role: string; content: string }) =>
-          `- ${sentence.role}: ${sentence.content}\n`
-      )
-      .join("")
+    // 👇 Convert transcript string to structured array
+    const lines = transcript.split('\n').filter(Boolean)
+
+    const structuredTranscript = lines.map((line) => {
+      const [role, ...rest] = line.split(':')
+      return {
+        role: role?.trim() || 'unknown',
+        content: rest.join(':').trim(),
+      }
+    })
+
+    // 👇 Format transcript for prompt
+    const formattedTranscript = structuredTranscript
+      .map(({ role, content }) => `- ${role}: ${content}`)
+      .join('\n')
 
     const { object } = await generateObject({
-      model: google("gemini-2.0-flash-001", {
-        structuredOutputs: false,
-      }),
+      model: google('gemini-1.5-flash', { structuredOutputs: false }),
       schema: feedbackSchema,
       prompt: `
-        You are an AI interviewer analyzing a mock interview. Your task is to evaluate the candidate based on structured categories. Be thorough and detailed in your analysis. Don't be lenient with the candidate. If there are mistakes or areas for improvement, point them out.
-        Transcript:
-        ${formattedTranscript}
+You are an AI interviewer analyzing a mock interview. Your task is to evaluate the candidate based on the transcript below.
 
-        Please score the candidate from 0 to 100 in the following areas. Do not add categories other than the ones provided:
-        - **Communication Skills**: Clarity, articulation, structured responses.
-        - **Technical Knowledge**: Understanding of key concepts for the role.
-        - **Problem-Solving**: Ability to analyze problems and propose solutions.
-        - **Cultural & Role Fit**: Alignment with company values and job role.
-        - **Confidence & Clarity**: Confidence in responses, engagement, and clarity.
-        `,
-      system:
-        "You are a professional interviewer analyzing a mock interview. Your task is to evaluate the candidate based on structured categories",
+Be structured, honest, and specific. Provide:
+
+1. A **total score** (0-100).
+2. Detailed **category scores** for:
+   - Communication Skills
+   - Technical Knowledge
+   - Problem-Solving
+   - Cultural & Role Fit
+   - Confidence & Clarity
+3. A list of **strengths** and **areas for improvement**.
+4. A **final written assessment**.
+5. A structured array of **interview questions** with:
+   - Question
+   - User's answer (infer from transcript)
+   - AI feedback (comment)
+   - A score (0-10)
+
+Transcript:
+${formattedTranscript}
+      `,
+      system: "You are a professional interviewer providing structured feedback on a candidate’s performance.",
     })
 
     const feedback = {
-      interviewId: interviewId,
-      userId: userId,
+      interviewId,
+      userId,
       totalScore: object.totalScore,
       categoryScores: object.categoryScores,
       strengths: object.strengths,
       areasForImprovement: object.areasForImprovement,
       finalAssessment: object.finalAssessment,
+      questions: object.questions ?? [],
       createdAt: new Date().toISOString(),
     }
 
     const feedbackRef = feedbackId
-      ? db.collection("feedback").doc(feedbackId)
-      : db.collection("feedback").doc()
+      ? db.collection('feedback').doc(feedbackId)
+      : db.collection('feedback').doc()
 
     await feedbackRef.set(feedback)
 
     return { success: true, feedbackId: feedbackRef.id }
   } catch (error) {
-    console.error("Error saving feedback:", error)
+    console.error('❌ Error saving feedback:', error)
     return { success: false }
   }
 }
@@ -71,21 +89,35 @@ export async function getInterviewById(id: string): Promise<Interview | null> {
   return interview.exists ? { id: interview.id, ...interview.data() } as Interview : null
 }
 
-export async function getFeedbackByInterviewId(
-  params: GetFeedbackByInterviewIdParams
-): Promise<Feedback | null> {
+export async function getFeedbackByInterviewId(params: { interviewId: string }): Promise<Feedback | null> {
   const { db } = initializeFirestore()
-  const { interviewId, userId } = params
-
+  const { interviewId } = params
+  
+  console.log('[getFeedbackByInterviewId] Looking for:', interviewId)
+  console.log('[getFeedbackByInterviewId] Looking for (type):', typeof interviewId)
+  console.log('[getFeedbackByInterviewId] Looking for (length):', interviewId.length)
+  
+  // First, let's see what interviewIds actually exist in the database
+  const allSnapshot = await db.collection("feedback").get()
+  console.log('[getFeedbackByInterviewId] All existing interviewIds:')
+  allSnapshot.forEach(doc => {
+    const data = doc.data()
+    console.log('  -', data.interviewId, '(type:', typeof data.interviewId, ', length:', data.interviewId?.length, ')')
+  })
+  
   const querySnapshot = await db
     .collection("feedback")
-    .where("interviewId", "==", interviewId)
-    .where("userId", "==", userId)
+    .where("interviewId", "==", interviewId.trim())
     .limit(1)
     .get()
-
-  if (querySnapshot.empty) return null
-
+    
+  console.log('[getFeedbackByInterviewId] Found:', querySnapshot.size)
+  
+  if (querySnapshot.empty) {
+    console.log('[getFeedbackByInterviewId] No documents found for interviewId:', interviewId)
+    return null
+  }
+  
   const feedbackDoc = querySnapshot.docs[0]
   return { id: feedbackDoc.id, ...feedbackDoc.data() } as Feedback
 }
@@ -125,4 +157,19 @@ export async function getInterviewsByUserId(
     id: doc.id,
     ...doc.data(),
   })) as Interview[]
+}
+
+export async function getAllFeedbacks() {
+    const { db } = initializeFirestore()
+
+    const snapshot = await db.collection("feedback").get()
+console.log("All feedback count:", snapshot.size)
+snapshot.forEach(doc => {
+  console.log(doc.id, doc.data())
+})
+
+return snapshot.docs.map(doc => ({
+  id: doc.id,
+  ...doc.data(),
+})) as Feedback[]
 }

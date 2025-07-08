@@ -187,7 +187,19 @@ export const feedbackSchema = z.object({
   strengths: z.array(z.string()),
   areasForImprovement: z.array(z.string()),
   finalAssessment: z.string(),
-});
+
+  // ✅ Added questions field
+  questions: z
+    .array(
+      z.object({
+        question: z.string(),
+        answer: z.string(),
+        comment: z.string(),
+        score: z.number(),
+      })
+    )
+    .optional(),
+})
 
 export const interviewCovers = [
   "/adobe.png",

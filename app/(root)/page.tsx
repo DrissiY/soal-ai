@@ -128,7 +128,7 @@ export default function Home() {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-green-400 via-emerald-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="relative flex items-center space-x-3">
-                    <span>{user ? 'Generate Interview' : '🚀 Start Interview'}</span>
+                    <span>{user ? 'Generate Interview' : '🚀 Start Free Interview'}</span>
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                   </div>
                 </button>

@@ -1,16 +1,23 @@
 interface Feedback {
   id: string;
   interviewId: string;
+  userId: string;
   totalScore: number;
+  finalAssessment: string;
+  strengths: string[];
+  areasForImprovement: string[];
+  createdAt: string;
   categoryScores: Array<{
     name: string;
     score: number;
     comment: string;
   }>;
-  strengths: string[];
-  areasForImprovement: string[];
-  finalAssessment: string;
-  createdAt: string;
+  questions: Array<{
+    question: string;
+    answer: string;
+    score: number;
+    comment?: string;
+  }>;
 }
 
 interface Interview {
@@ -28,7 +35,7 @@ interface Interview {
 interface CreateFeedbackParams {
   interviewId: string;
   userId: string;
-  transcript: { role: string; content: string }[];
+  transcript: string;
   feedbackId?: string;
 }
 

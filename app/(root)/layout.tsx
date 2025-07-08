@@ -29,13 +29,17 @@ const Rootlayout = ({ children }: { children: ReactNode }) => {
       {showLoader && <PageLoader />}
 
       <div
-        className={`w-screen min-h-screen overflow-hidden bg-[#FFFDF4] ${
+        className={`w-screen h-screen overflow-hidden bg-[#FFFDF4] ${
           isMobile ? 'flex flex-col' : 'flex'
         }`}
       >
         <Sidebar />
-        <div className={`flex-1 overflow-auto ${isMobile ? 'p-4 pt-2' : 'p-6'}`}>
-        <AuthInitializer />
+        <div
+          className={`flex-1 h-full overflow-auto ${
+            isMobile ? 'p-4 pt-2' : 'p-6'
+          }`}
+        >
+          <AuthInitializer />
           {children}
         </div>
       </div>

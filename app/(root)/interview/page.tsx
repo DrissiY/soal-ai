@@ -16,7 +16,7 @@ const Page = () => {
     }
   }, [user, router])
 
-  if (!user) return null // Or show loading state
+  if (!user) return null 
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4">
