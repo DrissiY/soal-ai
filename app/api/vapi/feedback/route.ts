@@ -17,9 +17,9 @@ export async function OPTIONS() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { interviewId, userId, transcript } = body
+    const { interviewId, userId, transcript, feedbackId } = body
 
-    if (!interviewId || !userId || !Array.isArray(transcript)) {
+    if (!interviewId || !userId || typeof transcript !== 'string') {
       return new Response(
         JSON.stringify({ success: false, error: 'Missing or invalid data' }),
         { status: 400, headers: corsHeaders }
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       interviewId,
       userId,
       transcript,
+      feedbackId,
     })
 
     return new Response(JSON.stringify(result), {
