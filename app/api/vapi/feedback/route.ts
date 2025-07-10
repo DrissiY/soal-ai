@@ -17,14 +17,29 @@ export async function OPTIONS() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
+    console.log('[POST /api/vapi/feedback] Received body:', body)
+
     const { interviewId, userId, transcript, feedbackId } = body
 
     if (!interviewId || !userId || typeof transcript !== 'string') {
+      console.warn('[POST /api/vapi/feedback] Missing or invalid data:', {
+        interviewId,
+        userId,
+        transcriptType: typeof transcript,
+      })
+
       return new Response(
         JSON.stringify({ success: false, error: 'Missing or invalid data' }),
         { status: 400, headers: corsHeaders }
       )
     }
+
+    console.log('[POST /api/vapi/feedback] Creating feedback with:', {
+      interviewId,
+      userId,
+      feedbackId,
+      transcriptSnippet: transcript.slice(0, 100), // log only part of it
+    })
 
     const result = await createFeedback({
       interviewId,
@@ -33,12 +48,14 @@ export async function POST(req: NextRequest) {
       feedbackId,
     })
 
+    console.log('[POST /api/vapi/feedback] Feedback created successfully:', result)
+
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    console.error('[API] Feedback Error:', err)
+    console.error('[POST /api/vapi/feedback] Error creating feedback:', err)
     return new Response(JSON.stringify({ success: false, error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -47,8 +64,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  return new Response(JSON.stringify({ success: true, message: 'Feedback endpoint ready' }), {
-    status: 200,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
+  console.log('[GET /api/vapi/feedback] Endpoint pinged')
+  return new Response(
+    JSON.stringify({ success: true, message: 'Feedback endpoint ready' }),
+    {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    }
+  )
 }
