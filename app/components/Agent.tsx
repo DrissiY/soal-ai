@@ -65,7 +65,7 @@ const Agent = ({ userName, userId, currentUser, type, questions,interviewId }: A
       content: [
         `Structured interview started.`,
         `User ID: ${userId}`,
-        `Interview ID: ${interviewId || 'N/A'}`,
+        `Interview ID: ${interviewId}`,
         `Questions:\n${questions.join('\n')}`,
       ].join('\n'),
     },
@@ -154,13 +154,16 @@ const Agent = ({ userName, userId, currentUser, type, questions,interviewId }: A
   try {
     setCallStatus(CallStatus.CONNECTING)
 
-    await vapi.start(assistantId, {
-      variableValues: {
-        username: userName,
-        userId,
-        ...(type === 'interview' ? { questions: questions?.join('\n') } : {}),
-      },
-    })
+  await vapi.start(assistantId, {
+  variableValues: {
+    username: userName,
+    userId,
+    ...(type === 'interview' ? {
+      questions: questions?.join('\n'),
+      interviewId,
+    } : {}),
+  },
+})
   } catch (err) {
     console.error('[VAPI] Call Error:', err)
     setErrorMessage('Error starting the call: ' + (err as Error).message)

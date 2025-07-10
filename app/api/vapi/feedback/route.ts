@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       interviewId,
       userId,
       feedbackId,
-      transcriptSnippet: transcript.slice(0, 100), // log only part of it
+      transcriptSnippet: transcript.slice(0, 100), 
     })
 
     const result = await createFeedback({
