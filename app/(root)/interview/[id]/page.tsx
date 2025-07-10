@@ -18,7 +18,6 @@ const InterviewPage = () => {
 
   const { interviews, setInterviews } = useInterviewStore()
   const currentInterview = interviews.find((i) => i.id === interviewId)
-  console.log('[InterviewPage] Current interview:', currentInterview)
 
   useEffect(() => {
     if (!user) {
@@ -28,10 +27,8 @@ const InterviewPage = () => {
 
     const fetchInterview = async () => {
       if (!interviewId) return
-
       const localInterview = interviews.find((i) => i.id === interviewId)
       if (localInterview) {
-        console.log('[InterviewPage] Using local interview')
         setQuestions(localInterview.questions || [])
         setLoading(false)
         return
@@ -62,63 +59,88 @@ const InterviewPage = () => {
   if (!user || loading) return null
 
   return (
-    <div className="min-h-screen bg-transparent relative overflow-hidden flex justify-center">
-      <div className="relative z-10 w-full px-4 md:px-20 py-10">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-purple-100 rounded-full px-4 py-2 mb-4">
-            <span className="text-purple-700 font-medium text-sm">Your Session</span>
+    <div className="min-h-screenp-4  sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 rounded-full px-4 py-1 text-sm font-medium mb-3">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            Live Session
           </div>
-          <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2 leading-relaxed">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             AI Interview Assistant
-          </h2>
-          <p className="text-gray-600 text-sm">
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500 max-w-md mx-auto mt-2">
             Speak naturally and clearly. The AI will guide you through the interview process.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-6">
+        {/* Main Layout */}
+        <div className="grid lg:grid-cols-4  gap-6">
           {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mb-4 flex items-center justify-center text-lg font-bold text-white">
+          <aside className="lg:col-span-1 order-2 lg:order-1">
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 space-y-6">
+              {/* Profile */}
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-purple-600 text-white flex items-center justify-center mx-auto text-lg font-bold">
                   {user.name.split(' ').map((n) => n[0]).join('')}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{user.name}</h3>
-                <p className="text-gray-600 text-sm">Interview Candidate</p>
+                <h3 className="text-lg font-semibold mt-3">{user.name}</h3>
+                <p className="text-sm text-gray-500">Interview Candidate</p>
               </div>
 
+              {/* Info */}
               {currentInterview && (
-                <div className="bg-gray-100 rounded-xl p-4 space-y-2">
-                  <h4 className="text-gray-900 font-medium mb-2 text-sm">Interview Details</h4>
-                  <InfoRow label="Interview ID" value={currentInterview.id} />
-                  <InfoRow label="Role" value={currentInterview.role} capitalize />
-                  <InfoRow label="Type" value={currentInterview.type} capitalize />
-                  <InfoRow label="Created At" value={currentInterview.createdAt} />
-
-                  {currentInterview.techstack?.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {currentInterview.techstack.map((tech) => (
-                        <span
-                          key={tech}
-                          className="px-2 py-1 text-xs bg-purple-200 text-purple-800 rounded-full"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                <div>
+                  <h4 className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-3">
+                    Interview Details
+                  </h4>
+                  <div className="space-y-3">
+                    <InfoRow label="Interview ID" value={currentInterview.id} />
+                    <InfoRow label="Role" value={currentInterview.role} capitalize />
+                    <InfoRow label="Type" value={currentInterview.type} capitalize />
+                    <InfoRow label="Created At" value={currentInterview.createdAt} />
+                    {currentInterview.techstack?.length > 0 && (
+                      <div className="pt-2">
+                        <p className="text-xs text-gray-500 mb-1">Tech Stack:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {currentInterview.techstack.map((tech) => (
+                            <span
+                              key={tech}
+                              className="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full"
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
-          </div>
+          </aside>
 
-          {/* Main content */}
-          <div className="lg:col-span-3">
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex items-center justify-center min-h-[300px]">
+          {/* Main Section */}
+          <main className="lg:col-span-3 order-1 rounded-2xl border border-gray-200 lg:order-2">
+            <div className="bg-gray-50 rounded-2xl p-6 space-y-6">
+              {/* Chat Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-sm text-gray-500">AI Assistant is ready</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                  Online
+                </div>
+              </div>
+
+              {/* Chat UI */}
+              <div className="bg-white rounded-xl  flex justify-center items-center min-h-[400px] sm:min-h-[500px] p-4">
                 <Agent
-                  userName={user.name}
+                  username={user.name}
                   userId={user.id}
                   currentUser={user}
                   type="interview"
@@ -127,16 +149,17 @@ const InterviewPage = () => {
                 />
               </div>
 
-              <div className="flex justify-center pt-4">
+              {/* Footer */}
+              <div className="text-center">
                 <button
                   onClick={() => router.push('/interview')}
-                  className="text-sm text-purple-700 hover:text-purple-900 underline transition-all"
+                  className="text-sm font-medium text-purple-600 hover:text-purple-800 transition-colors"
                 >
-                  Generate Another Interview
+                  ➕ Generate Another Interview
                 </button>
               </div>
             </div>
-          </div>
+          </main>
         </div>
       </div>
     </div>
@@ -152,9 +175,11 @@ const InfoRow = ({
   value: string
   capitalize?: boolean
 }) => (
-  <div className="flex justify-between text-xs">
-    <span className="text-gray-600">{label}:</span>
-    <span className={`text-gray-900 ${capitalize ? 'capitalize' : ''}`}>{value}</span>
+  <div className="flex justify-between text-sm text-gray-700">
+    <span className="font-medium">{label}:</span>
+    <span className={`${capitalize ? 'capitalize' : ''} text-right max-w-[60%] truncate`}>
+      {value}
+    </span>
   </div>
 )
 
