@@ -55,17 +55,22 @@ const Agent = ({ userName, userId, currentUser, type, questions,interviewId }: A
           },
         })
 
-        if (isInterview) {
-          console.log('[Interview Questions Sent to Vapi]', questions)
+      if (isInterview) {
+  console.log('[Interview Questions Sent to Vapi]', questions)
 
-          vapi.send({
-            type: 'add-message',
-            message: {
-              role: 'system',
-              content: `Structured interview questions:\n${questions.join('\n')}`,
-            },
-          })
-        }
+  vapi.send({
+    type: 'add-message',
+    message: {
+      role: 'system',
+      content: [
+        `Structured interview started.`,
+        `User ID: ${userId}`,
+        `Interview ID: ${interviewId || 'N/A'}`,
+        `Questions:\n${questions.join('\n')}`,
+      ].join('\n'),
+    },
+  })
+}
       } catch (e) {
         console.error('Failed to send metadata on call start:', e)
       }
