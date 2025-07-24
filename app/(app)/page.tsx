@@ -10,6 +10,7 @@ import { useUserStore } from '@/store/userStore'
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
 import { auth } from '@/firebase/client' // your firebase client config
 import { handleGoogleAuth } from '@/lib/actions/auth.action'
+import LandingPageSections from '../components/LandingPageSections'
 
 export default function Home() {
   const router = useRouter()
@@ -144,7 +145,7 @@ export default function Home() {
             >
               <div className="relative w-full h-96 lg:h-[500px]">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 blur-3xl rounded-full" />
-                <BubbleVisualizer volume={10} />
+                <BubbleVisualizer volume={2} />
               </div>
             </motion.div>
           </div>

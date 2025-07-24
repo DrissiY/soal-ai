@@ -36,7 +36,7 @@ const Rootlayout = ({ children }: { children: ReactNode }) => {
         <Sidebar />
         <div
           className={`flex-1 h-full overflow-auto ${
-            isMobile ? 'p-4 pt-2' : 'p-6'
+            isMobile ? 'p-4 pt-2' : ''
           }`}
         >
           <AuthInitializer />

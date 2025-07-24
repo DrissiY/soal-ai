@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     console.log('[POST /api/vapi/feedback] Received body:', body)
 
-    const { interviewId, userId, transcript, feedbackId } = body
+    const { interviewId, userId, transcript } = body
 
     if (!interviewId || !userId || typeof transcript !== 'string') {
       console.warn('[POST /api/vapi/feedback] Missing or invalid data:', {
@@ -37,7 +37,6 @@ export async function POST(req: NextRequest) {
     console.log('[POST /api/vapi/feedback] Creating feedback with:', {
       interviewId,
       userId,
-      feedbackId,
       transcriptSnippet: transcript.slice(0, 100), 
     })
 
@@ -45,7 +44,7 @@ export async function POST(req: NextRequest) {
       interviewId,
       userId,
       transcript,
-      feedbackId,
+
     })
 
     console.log('[POST /api/vapi/feedback] Feedback created successfully:', result)

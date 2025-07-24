@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import Agent from '@/app/components/Agent'
+import Agent from '@/app/components/Agent/Agent'
 import { useUserStore } from '@/store/userStore'
 import { useInterviewStore } from '@/store/interviewStore'
 import { getInterviewById } from '@/lib/actions/general.action'

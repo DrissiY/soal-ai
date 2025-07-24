@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Agent from '@/app/components/Agent'
+import Agent from '@/app/components/Agent/Agent'
 import { useUserStore } from '@/store/userStore'
 
 const Page = () => {
