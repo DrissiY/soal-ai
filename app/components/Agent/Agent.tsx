@@ -1,4 +1,3 @@
-// File: components/agent/Agent.tsx
 'use client'
 
 import { useAgentController } from './useAgentController'
@@ -14,7 +13,18 @@ const Agent = (props: AgentProps) => {
     errorMessage,
     handleCall,
     handleEndCall,
+    isLoadingFeedback, // ✅ now used
   } = useAgentController(props)
+
+  // ✅ Fullscreen loader when sending feedback
+  if (isLoadingFeedback) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center text-white">
+        <Spinner className="w-10 h-10 mb-4" />
+        <p className="text-sm text-white/70">Génération du feedback en cours...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col items-center w-full max-w-md space-y-6 p-6">

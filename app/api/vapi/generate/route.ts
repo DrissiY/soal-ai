@@ -1,101 +1,111 @@
-import { generateText } from "ai";
-import { google } from "@ai-sdk/google";
-import { initializeFirestore } from "@/firebase/admin";
+import { generateObject } from 'ai'
+import { google } from '@ai-sdk/google'
+import { initializeFirestore } from '@/firebase/admin'
+import { z } from 'zod'
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
 
 export async function OPTIONS() {
   return new Response(null, {
     status: 204,
     headers: corsHeaders,
-  });
+  })
 }
 
 export async function POST(request: Request) {
-  const { db } = initializeFirestore();
+  const { db } = initializeFirestore()
 
   try {
-    const { type, role, level, techstack, amount, userId } = await request.json();
+    const { userId, transcript } = await request.json()
 
-    console.log("[VAPI API HIT]", { type, role, level, techstack, amount, userId });
+    console.log('[🟢 POST /api/vapi/generate]', { userId })
+    console.log('[📝 Transcript Input]', transcript?.slice(0, 300))
 
-    const { text: rawQuestions } = await generateText({
-      model: google("gemini-2.0-flash-001"),
-      prompt: `Prepare questions for a job interview.
-The job role is ${role}.
-The job experience level is ${level}.
-The tech stack used in the job is: ${techstack}.
-The focus between behavioural and technical questions should lean towards: ${type}.
-The amount of questions required is: ${amount}.
+    const result = await generateObject({
+      model: google('gemini-1.5-flash'),
+      prompt: `
+You are an AI assistant that analyzes transcripts of voice-based job interview setup calls.
 
-Return ONLY a raw JSON array of questions like:
-["Question 1", "Question 2", "Question 3"]
+Your goal is to extract structured information and generate a list of custom interview questions based on what the user said.
 
-Do NOT include any extra text, explanation, markdown, or formatting.`
-    });
+Here’s what you must return as a JSON object:
 
-    console.log("[🧪 Gemini RAW Output]", rawQuestions);
+{
+  "role": string — the job title mentioned (e.g., "Frontend Developer"),
+  "level": string — the experience level (e.g., "Junior", "Mid", "Senior"),
+  "techstack": string[] — list of technologies mentioned (e.g., ["React", "Next.js", "Tailwind"]),
+  "type": string — either "technical" or "behavioral" depending on what the user asked for,
+  "questions": string[] — 5–10 custom interview questions
+}
 
-    const cleaned = rawQuestions
-      .replace(/```json/i, "")
-      .replace(/```/, "")
-      .trim();
+DO NOT include explanation or markdown, just return the JSON object.
 
-    let parsedQuestions: string[] = [];
+Transcript:
+${transcript}
+`,
+      schema: z.object({
+        role: z.string(),
+        level: z.string(),
+        type: z.string(),
+        techstack: z.array(z.string()),
+        questions: z.array(z.string()),
+      }),
+      system:
+        'You are a structured extractor of job-related transcripts. Be precise. Never make up values not mentioned.',
+    })
 
-    try {
-      parsedQuestions = JSON.parse(cleaned);
-      if (!Array.isArray(parsedQuestions)) throw new Error("Not an array");
-    } catch (err) {
-      console.warn("[⚠️ Gemini returned non-JSON or invalid array]", cleaned);
-      parsedQuestions = [
-        "Could not generate valid questions.",
-        "Please try again or adjust the input.",
-      ];
+    console.log('[✅ Gemini Parsed Result]', result)
+
+    const object = result.object
+
+    const isValid =
+      object?.role &&
+      object?.level &&
+      object?.type &&
+      Array.isArray(object?.techstack) &&
+      object.techstack.length > 0 &&
+      Array.isArray(object?.questions) &&
+      object.questions.length > 0
+
+    if (!isValid) {
+      console.warn('[⚠️ Gemini returned incomplete data]', result)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing fields: Make sure you clearly mention role, level, techstack, and type during the interview.',
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
     }
 
     const interview = {
-      role,
-      type,
-      level,
-      techstack: (techstack || "").split(",").map((t: string) => t.trim()),
-      questions: parsedQuestions,
-      userId: userId,
+      userId,
+      ...object,
       finalized: true,
       createdAt: new Date().toISOString(),
-    };
+    }
 
-    await db.collection("interviews").add(interview);
+    await db.collection('interviews').add(interview)
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, data: interview }), {
       status: 200,
       headers: {
         ...corsHeaders,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
-    });
+    })
   } catch (error) {
-    console.error("[🔥 VAPI ERROR]", error);
+    console.error('[🔥 GENERATE API ERROR]', error)
     return new Response(JSON.stringify({ success: false, error: String(error) }), {
       status: 500,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json",
-      },
-    });
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
-}
-
-export async function GET() {
-  return new Response(JSON.stringify({ success: true, data: "Ping from Vapi API" }), {
-    status: 200,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json",
-    },
-  });
 }

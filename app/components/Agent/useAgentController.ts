@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -7,13 +6,22 @@ import { vapi } from '@/lib/vapi.sdk'
 import { playSound } from '@/lib/playSound'
 import { AgentProps, CallStatus, SavedMessage } from './types'
 
-export const useAgentController = ({ userName, userId, currentUser, type, questions, interviewId }: AgentProps) => {
+export const useAgentController = ({
+  userName,
+  userId,
+  currentUser,
+  type,
+  questions,
+  interviewId,
+}: AgentProps) => {
   const router = useRouter()
+
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE)
   const [messages, setMessages] = useState<SavedMessage[]>([])
   const transcriptRef = useRef<SavedMessage[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false)
 
   const lastMessage = messages[messages.length - 1]
   const isInterview = type === 'interview' && questions && questions.length > 0
@@ -51,47 +59,76 @@ export const useAgentController = ({ userName, userId, currentUser, type, questi
       }
     }
 
-  const onCallEnd = async () => {
-  playSound('/sounds/sound-end.mp3')
-  setCallStatus(CallStatus.INACTIVE)
-  setIsSpeaking(false)
-
-  if (type === 'interview' && interviewId) {
-    try {
-      console.log('[📦 Raw Transcript]', transcriptRef.current)
+    const onCallEnd = async () => {
+      playSound('/sounds/sound-end.mp3')
+      setCallStatus(CallStatus.INACTIVE)
+      setIsSpeaking(false)
 
       const transcript = transcriptRef.current
         .map((msg) => `${msg.role}: ${msg.content}`)
         .join('\n')
 
-      // ✅ Log the full object before sending
-      console.log('[📤 Sending to Feedback API]', {
-        interviewId,
-        userId,
-        transcript,
-      })
+      console.log('[📦 Raw Transcript]', transcriptRef.current)
 
-      const res = await fetch('/api/vapi/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          interviewId,
-          userId,
-          transcript,
-        }),
-      })
+      if (type === 'interview' && interviewId) {
+        try {
+          setIsLoadingFeedback(true)
+          console.log('[📤 Sending to Feedback API]', {
+            interviewId,
+            userId,
+            transcript,
+          })
 
-      const result = await res.json()
-      console.log('[✅ Feedback API Result]', result)
-    } catch (err) {
-      console.error('[❌ Feedback API Error]', err)
-    } finally {
-      transcriptRef.current = []
-      setMessages([])
-      router.push(`/feedback/${interviewId}`)
+          const res = await fetch('/api/vapi/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              interviewId,
+              userId,
+              transcript,
+            }),
+          })
+
+          const result = await res.json()
+          console.log('[✅ Feedback API Result]', result)
+        } catch (err) {
+          console.error('[❌ Feedback API Error]', err)
+        } finally {
+          transcriptRef.current = []
+          setMessages([])
+          // 👇 Delay a bit to ensure UI sees loading before navigating
+          setTimeout(() => {
+            setIsLoadingFeedback(false)
+            router.push(`/feedback/${interviewId}`)
+          }, 500)
+        }
+      } else if (type === 'generate') {
+        try {
+          console.log('[📤 Sending to GENERATE API]', {
+            userId,
+            transcript,
+          })
+
+          const res = await fetch('/api/vapi/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId,
+              transcript,
+            }),
+          })
+
+          const result = await res.json()
+          console.log('[✅ GENERATE API Result]', result)
+        } catch (err) {
+          console.error('[❌ GENERATE API Error]', err)
+        } finally {
+          transcriptRef.current = []
+          setMessages([])
+        }
+      }
     }
-  }
-}
+
     const onMessage = (message: any) => {
       if (message.type === 'transcript' && message.transcriptType === 'final') {
         const newMessage: SavedMessage = {
@@ -187,6 +224,7 @@ export const useAgentController = ({ userName, userId, currentUser, type, questi
     isSpeaking,
     lastMessage,
     errorMessage,
+    isLoadingFeedback, // ✅ exposed to show loader in Agent.tsx
     handleCall,
     handleEndCall,
   }

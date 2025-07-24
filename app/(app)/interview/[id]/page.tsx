@@ -6,6 +6,7 @@ import Agent from '@/app/components/Agent/Agent'
 import { useUserStore } from '@/store/userStore'
 import { useInterviewStore } from '@/store/interviewStore'
 import { getInterviewById } from '@/lib/actions/general.action'
+import PageLoader from '../../../components/landingPage' // <-- import the loader
 
 const InterviewPage = () => {
   const user = useUserStore((s) => s.user)
@@ -56,10 +57,10 @@ const InterviewPage = () => {
     fetchInterview()
   }, [user, interviewId, router, setInterviews, interviews])
 
-  if (!user || loading) return null
+  if (!user || loading) return <PageLoader text="Chargement de l’entretien..." />
 
   return (
-    <div className="min-h-screenp-4  sm:p-6 lg:p-8">
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
@@ -76,7 +77,7 @@ const InterviewPage = () => {
         </div>
 
         {/* Main Layout */}
-        <div className="grid lg:grid-cols-4  gap-6">
+        <div className="grid lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <aside className="lg:col-span-1 order-2 lg:order-1">
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 space-y-6">
@@ -138,7 +139,7 @@ const InterviewPage = () => {
               </div>
 
               {/* Chat UI */}
-              <div className="bg-white rounded-xl  flex justify-center items-center min-h-[400px] sm:min-h-[500px] p-4">
+              <div className="bg-white rounded-xl flex justify-center items-center min-h-[400px] sm:min-h-[500px] p-4">
                 <Agent
                   username={user.name}
                   userId={user.id}
